@@ -55,10 +55,12 @@ open class KSTokenField: UITextField {
    fileprivate var _minWidthForInput: CGFloat = 50.0
    fileprivate var _separatorText: String?
    fileprivate var _font: UIFont?
+    fileprivate var _promptFont: UIFont?
    fileprivate var _paddingX: CGFloat?
    fileprivate var _paddingY: CGFloat?
    fileprivate var _marginX: CGFloat?
    fileprivate var _marginY: CGFloat?
+    fileprivate var _promtMarginX: CGFloat?
    fileprivate var _bufferX: CGFloat?
    fileprivate var _removesTokensOnEndEditing = true
    fileprivate var _scrollView = UIScrollView(frame: .zero)
@@ -109,9 +111,11 @@ open class KSTokenField: UITextField {
             _paddingY = tokenView!.paddingY
             _marginX = tokenView!.marginX
             _marginY = tokenView!.marginY
+            _promtMarginX = tokenView!.promtMarginX
             _bufferX = tokenView!.bufferX
             _direction = tokenView!.direction
             _font = tokenView!.font
+            _promptFont = tokenView!.promptFont
             if (_font != nil) {
                font = _font
             }
@@ -396,14 +400,14 @@ open class KSTokenField: UITextField {
       }
       
       var lineNumber = 1
-      let leftMargin = _leftViewRect().width
+      let leftMargin = _leftViewRect().maxX + _marginX!
       let rightMargin = _rightViewRect().width
       let tokenHeight = _font!.lineHeight + _paddingY!;
       
       var tokenPosition = CGPoint(x: _marginX!, y: _marginY!)
       
       for token: KSToken in tokens {
-         let width = KSUtils.getRect(token.title as NSString, width: bounds.size.width, font: _font!).size.width + ceil(_paddingX!*2+1)
+         let width = KSUtils.getRect(token.titleText as NSString, width: bounds.size.width, font: _font!).size.width + 2//ceil(_paddingX!*2+1)
          let tokenWidth = min(width, token.maxWidth)
          
          // Add token at specific position
@@ -425,17 +429,25 @@ open class KSTokenField: UITextField {
          tokenPosition.x = _marginX!
          tokenPosition.y += (tokenHeight + _marginY!);
       }
-      
+    
+    let offsetX = _leftViewRect().maxX + (_bufferX ?? 0)
+    _scrollView.frame.size.width = frame.size.width - offsetX
+    _scrollView.frame.origin.x = offsetX
+    
       var positionY = (lineNumber == 1 && tokens.count == 0) ? _selfFrame!.size.height: (tokenPosition.y + tokenHeight + _marginY!)
       _scrollView.contentSize = CGSize(width: _scrollView.frame.width, height: positionY)
       if (positionY > maximumHeight) {
          positionY = maximumHeight
       }
-      
+    
+      let offsetY = (lineNumber == 1 && !tokens.isEmpty) ? (frame.height - tokenHeight - _marginY!*2)/2 : 0
+      _scrollView.frame.origin.y = offsetY
+    
       _scrollView.frame.size = CGSize(width: _scrollView.frame.width, height: positionY)
       scrollViewScrollToEnd()
-      
-      return CGPoint(x: tokenPosition.x + leftMargin, y: positionY)
+    
+    let carectPositionY = (lineNumber == 1 && !tokens.isEmpty) ? positionY + font!.lineHeight / 2 : positionY
+      return CGPoint(x: tokenPosition.x + leftMargin, y: carectPositionY)
    }
    
    
@@ -451,7 +463,7 @@ open class KSTokenField: UITextField {
       var tokenPosition = CGPoint(x: _marginX!, y: _marginY!)
       
       for token: KSToken in tokens {
-         let width = KSUtils.getRect(token.title as NSString, width: bounds.size.width, font: _font!).size.width + ceil(_paddingX!*2+1)
+         let width = KSUtils.getRect(token.titleText as NSString, width: bounds.size.width, font: _font!).size.width + ceil(_paddingX!*2+1)
          let tokenWidth = min(width, token.maxWidth)
          
          if ((token.superview) != nil) {
@@ -490,7 +502,7 @@ open class KSTokenField: UITextField {
       if (!_setupCompleted) {return .zero}
       
       if (tokens.count == 0 || _caretPoint == nil) {
-         return CGRect(x: _leftViewRect().width + _marginX! + _bufferX!, y: _leftViewRect().origin.y, width: bounds.size.width-5, height: bounds.size.height)
+         return CGRect(x: _leftViewRect().maxX + _marginX! + _bufferX!, y: _leftViewRect().origin.y, width: bounds.size.width-5, height: bounds.size.height)
       }
       
       if (tokens.count != 0 && _state == .closed) {
@@ -501,7 +513,7 @@ open class KSTokenField: UITextField {
    }
    
    override open func leftViewRect(forBounds bounds: CGRect) -> CGRect {
-      return CGRect(x: _marginX!, y: (_selfFrame != nil) ? (_selfFrame!.height - _leftViewRect().height)*0.5: (bounds.height - _leftViewRect().height)*0.5, width: _leftViewRect().width, height: ceil(_leftViewRect().height))
+      return CGRect(x: _promtMarginX!, y: (_selfFrame != nil) ? (_selfFrame!.height - _leftViewRect().height)*0.5: (bounds.height - _leftViewRect().height)*0.5, width: _leftViewRect().width, height: ceil(_leftViewRect().height))
    }
    
    override open func textRect(forBounds bounds: CGRect) -> CGRect {
@@ -544,11 +556,11 @@ open class KSTokenField: UITextField {
          var label = leftView
          if !(label is UILabel) {
             label = UILabel(frame: .zero)
-            label?.frame.origin.x += _marginX!
+            label?.frame.origin.x += _promtMarginX!
             leftViewMode = .always
          }
          (label as! UILabel).text = text
-         (label as! UILabel).font = font
+         (label as! UILabel).font = _promptFont
          (label as! UILabel).textColor = promptTextColor
          (label as! UILabel).sizeToFit()
          leftView = label
@@ -589,7 +601,7 @@ open class KSTokenField: UITextField {
             }
             
             let width = KSUtils.widthOfString(title, font: font!)
-            if width + _leftViewRect().width > bounds.width {
+            if width + _leftViewRect().maxX > bounds.width {
                text = "\(tokens.count) \(_descriptionText)"
             } else {
                text = title

@@ -43,6 +43,10 @@ open class KSToken : UIControl {
    
    /// default is ""
    open var title = ""
+    
+    var titleText: String {
+        return isSelected ? title : title + ","
+    }
    
    /// default is nil. Any Custom object.
    open var object: AnyObject?
@@ -121,11 +125,11 @@ open class KSToken : UIControl {
       //// Rectangle Drawing
       
       // fill background
-      let rectanglePath = UIBezierPath(roundedRect: rect, cornerRadius: 15)
+      let rectanglePath = UIBezierPath(roundedRect: rect, cornerRadius: 0)
       
       var textColor: UIColor
       var backgroundColor: UIColor
-      
+    
       if (isSelected) {
          if (tokenBackgroundHighlightedColor != nil) {
             backgroundColor = tokenBackgroundHighlightedColor!
@@ -158,7 +162,7 @@ open class KSToken : UIControl {
       }
       
       // Text
-      let rectangleTextContent = title
+      let rectangleTextContent = titleText
       let rectangleStyle = NSMutableParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
       rectangleStyle.lineBreakMode = NSLineBreakMode.byTruncatingTail
       rectangleStyle.alignment = NSTextAlignment.center
