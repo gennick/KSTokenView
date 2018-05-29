@@ -217,6 +217,15 @@ open class KSTokenView: UIView {
          }
       }
    }
+    
+    /// default is 5.0. Horizontal margin between tokens
+    @objc open var promtMarginX: CGFloat = 5.0 {
+        didSet {
+            if (oldValue != promtMarginX) {
+                _updateTokenField()
+            }
+        }
+    }
    
    /// default is 5.0. Vertical margin between tokens
    @objc open var marginY: CGFloat = 5.0 {
@@ -244,6 +253,15 @@ open class KSTokenView: UIView {
          }
       }
    }
+    
+    /// default is UIFont.systemFontOfSize(16)
+    @objc open var promptFont: UIFont = UIFont.systemFont(ofSize: 16) {
+        didSet {
+            if (oldValue != promptFont) {
+                _updateTokenField()
+            }
+        }
+    }
    
    /// default is 50.0. Caret moves to new line if input width is less than this value
    @objc open var minWidthForInput: CGFloat = 50.0 {
